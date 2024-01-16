@@ -20,5 +20,5 @@ public class YyyyMmMbr implements Serializable {
     private YyyyMm yyyyMm;
 
     @Column(name="MBR_ID", nullable = false, columnDefinition = "NUMBER(12)")
-    private String mbrId;
+    private Long mbrId;
 }

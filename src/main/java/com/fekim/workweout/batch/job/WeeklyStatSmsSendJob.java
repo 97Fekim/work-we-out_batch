@@ -6,6 +6,7 @@ import com.fekim.workweout.batch.repository.stat.WeeklyWkoutStatRsltRepository;
 import com.fekim.workweout.batch.repository.stat.WeeklyWkoutStatScheduleRepository;
 import com.fekim.workweout.batch.repository.stat.entity.WeeklyWkoutStatRslt;
 import com.fekim.workweout.batch.repository.stat.entity.WeeklyWkoutStatSchedule;
+import com.fekim.workweout.batch.repository.stat.entity.key.YyyyMmWMbr;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -64,12 +65,12 @@ public class WeeklyStatSmsSendJob {
     @Bean
     public Step step01_WeeklyStatSmsSendJob(JobRepository jobRepository,
                                             PlatformTransactionManager transactionManager,
-                                            @Value("#{jobParameters[yyyyMmW]},") String yyyyMmW) {
+                                            @Value("#{jobParameters[yyyyMmW]}") String yyyyMmW) {
 
         return new StepBuilder("step01", jobRepository)
                 .<Member, WeeklyWkoutStatRslt>chunk(chunkSize, transactionManager)
                 .reader(reader_step01_WeeklyStatSmsSendJob(yyyyMmW))
-                //.processor(processor())
+                .processor(processor_step01_WeeklyStatSmsSendJob(yyyyMmW))
                 .writer(writer_step01_WeeklyStatSmsSendJob(yyyyMmW))
                 .build();
     }
@@ -102,6 +103,46 @@ public class WeeklyStatSmsSendJob {
 
     @StepScope
     @Bean
+    public ItemProcessor<Member, WeeklyWkoutStatRslt> processor_step01_WeeklyStatSmsSendJob(@Value("#{jobParameters[yyyyMmW]}") String yyyyMmW) {
+
+        YyyyMmW cuofYyyyMmW = makeYyyyMmW(yyyyMmW);
+
+        return member -> {
+
+            Long mbrId = member.getMbrId();
+            String statRsltTitle = "";
+            String statRsltContent = "";
+            String smsSendRsltClsfCd = "";
+
+            // (1) 통계결과 생성
+            try {
+                statRsltTitle = "Dummy Title1";
+                statRsltContent = "Dummy Content1";
+
+            } catch (Exception e) {  // 처리중 오류가 발생할 경우 [02:발송실패] 처리한다.
+                smsSendRsltClsfCd = "02";
+            }
+
+            // (2) 통계결과 조립
+            return WeeklyWkoutStatRslt.builder()
+                    .yyyyMmWMbr(YyyyMmWMbr.builder()
+                            .yyyyMmW(YyyyMmW.builder()
+                                    .cuofYyyy(cuofYyyyMmW.getCuofYyyy())
+                                    .cuofMm(cuofYyyyMmW.getCuofMm())
+                                    .cuofWeek(cuofYyyyMmW.getCuofWeek())
+                                    .build())
+                            .mbrId(mbrId)
+                            .build())
+                    .statRsltTitle(statRsltTitle)
+                    .statRsltContent(statRsltContent)
+                    .smsSendRsltClsfCd(smsSendRsltClsfCd)
+                    .build();
+        };
+
+    }
+
+    @StepScope
+    @Bean
     public ItemWriter<WeeklyWkoutStatRslt> writer_step01_WeeklyStatSmsSendJob(@Value("#{jobParameters[yyyyMmW]}") String yyyyMmW) {
         return results -> {
             for(WeeklyWkoutStatRslt weeklyWkoutStatRslt : results){
@@ -113,6 +154,9 @@ public class WeeklyStatSmsSendJob {
                 System.out.println("[DEBUG]  - SMS Content : " + weeklyWkoutStatRslt.getStatRsltContent());
                 System.out.println("[DEBUG]  - SMS Send Status : " + weeklyWkoutStatRslt.getSmsSendRsltClsfCd());
                 System.out.println("[DEBUG]====================Weekly Stat Sms Send reslut====================");
+
+                // 통계결과 DB에 반영한다.
+                weeklyWkoutStatRsltRepository.save(weeklyWkoutStatRslt);
             }
         };
     }
