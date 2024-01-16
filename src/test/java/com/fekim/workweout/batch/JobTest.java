@@ -24,7 +24,8 @@ public class JobTest {
     public void WeeklyStatSmsDendJobTest() throws Exception{
 
         JobParameters jobParameters = new JobParametersBuilder()
-                .addString("yyyyMmW", "2024022")
+                .addString("yyyyMmW", "2023082")
+                .addString("reSendYn", "N")
                 .toJobParameters();
 
         jobLauncher.run(job, jobParameters);
