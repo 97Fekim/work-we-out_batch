@@ -3,12 +3,9 @@ package com.fekim.workweout.batch;
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.batch.JobLauncherApplicationRunner;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.scheduling.quartz.SpringBeanJobFactory;
 
 @SpringBootTest
 public class JobTest {
@@ -24,8 +21,9 @@ public class JobTest {
     public void WeeklyStatSmsDendJobTest() throws Exception{
 
         JobParameters jobParameters = new JobParametersBuilder()
-                .addString("yyyyMmW", "2024012")
-                .addString("reSendYn", "N")
+                .addString("yyyyMmW", "2024011")
+                .addString("reSendYn", "Y")
+                .addString("dummy", "6")
                 .toJobParameters();
 
         jobLauncher.run(job, jobParameters);

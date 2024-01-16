@@ -34,4 +34,20 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
                                  @Param("cuofMm") String cuofMm,
                                  @Param("cuofWeek") String cuofWeek);
 
+    @Query(value = "" +
+            "select M " +
+            "from Member M " +
+            "join WeeklyWkoutStatRslt WR " +
+            "  on WR.yyyyMmWMbr.mbrId = M.mbrId " +
+            "where WR.yyyyMmWMbr.yyyyMmW.cuofYyyy = :cuofYyyy " +
+            "  and WR.yyyyMmWMbr.yyyyMmW.cuofMm = :cuofMm " +
+            "  and WR.yyyyMmWMbr.yyyyMmW.cuofWeek = :cuofWeek " +
+            "  and WR.smsSendRsltClsfCd = '02' " +
+            "group by M.mbrId " +
+            "order by M.mbrId ")
+    List<Member> findMemberList2 (@Param("cuofYyyy") String cuofYyyy,
+                                 @Param("cuofMm") String cuofMm,
+                                 @Param("cuofWeek") String cuofWeek);
+
+
 }

@@ -21,4 +21,13 @@ public class MemberRepositoryTest {
         }
     }
 
+    @Test
+    void findMemberList2Test() {
+        List<Member> memberList = memberRepository.findMemberList2("2024", "01", "1");
+        for (Member member : memberList) {
+            System.out.println(member.getMbrNm());
+        }
+    }
+
+
 }
