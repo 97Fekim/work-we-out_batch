@@ -82,6 +82,7 @@ public class WeeklyStatSmsSendJob {
                                             @Value("#{jobParameters[yyyyMmW]}") String yyyyMmW,
                                             @Value("#{jobParameters[reSendYn]}") String reSendYn) {
         return new StepBuilder("step01", jobRepository)
+                .allowStartIfComplete(true)
                 .<Member, WeeklyWkoutStatRslt>chunk(chunkSize, transactionManager)
                 .reader(reader_step01_WeeklyStatSmsSendJob(yyyyMmW, reSendYn))
                 .processor(processor_step01_WeeklyStatSmsSendJob(yyyyMmW))

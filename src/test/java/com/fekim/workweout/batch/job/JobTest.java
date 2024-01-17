@@ -1,4 +1,4 @@
-package com.fekim.workweout.batch;
+package com.fekim.workweout.batch.job;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.batch.core.*;

@@ -351,14 +351,17 @@ public class MonthlyStatSmsSendJob {
         /* 2. 운동종목별 중량증감 */
         //  2-1. 이전 Month 정보 조회
         List<Object[]> bfYyyyMmEntity = dateRepository.findBeforeCuofYyyyMm(cuofYyyyMm, 1L);
+
         YyyyMm bfYyyyMm = YyyyMm.builder()
                 .cuofYyyy(String.valueOf(bfYyyyMmEntity.get(0)[0]))
                 .cuofMm(String.valueOf(bfYyyyMmEntity.get(0)[1]))
                 .build();
+
         //  2-2. 중량증감 생성
-        List<Object[]> MonthlyMethodWeiIncs = statRepository.findMonthlyMethodWeiIncs(mbrId, bfYyyyMm, cuofYyyyMm);
+        List<Object[]> monthlyMethodWeiIncs = statRepository.findMonthlyMethodWeiIncs(mbrId, bfYyyyMm, cuofYyyyMm);
+
         content.append("[2. 전 월 대비 운동종목별 중량 상승 추이]\n");
-        for (Object[] weiInc : MonthlyMethodWeiIncs) {
+        for (Object[] weiInc : monthlyMethodWeiIncs) {
 
             String methodNm = String.valueOf(weiInc[1]);
             Long bfWei = ((BigDecimal)weiInc[2]).longValue();

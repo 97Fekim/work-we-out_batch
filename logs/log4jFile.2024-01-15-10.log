@@ -1,5 +1,5 @@
-2024-01-16 17:17:32,493 [main] INFO  org.springframework.test.context.support.AnnotationConfigContextLoaderUtils(detectDefaultConfigurationClasses:83) - Could not detect default configuration classes for test class [com.fekim.workweout.batch.JobTest]: JobTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2024-01-16 17:17:32,668 [main] INFO  org.springframework.boot.test.context.SpringBootTestContextBootstrapper(getOrFindConfigurationClasses:234) - Found @SpringBootConfiguration com.fekim.workweout.WorkWeOutApplication for test class com.fekim.workweout.batch.JobTest
+2024-01-16 17:17:32,493 [main] INFO  org.springframework.test.context.support.AnnotationConfigContextLoaderUtils(detectDefaultConfigurationClasses:83) - Could not detect default configuration classes for test class [com.fekim.workweout.batch.job.JobTest]: JobTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2024-01-16 17:17:32,668 [main] INFO  org.springframework.boot.test.context.SpringBootTestContextBootstrapper(getOrFindConfigurationClasses:234) - Found @SpringBootConfiguration com.fekim.workweout.WorkWeOutApplication for test class com.fekim.workweout.batch.job.JobTest
 2024-01-16 17:17:33,831 [main] INFO  org.springframework.batch.core.configuration.annotation.BatchRegistrar(registerBeanDefinitions:70) - Finished Spring Batch infrastructure beans configuration in 7 ms.
 2024-01-16 17:17:34,092 [main] INFO  org.springframework.data.repository.config.RepositoryConfigurationDelegate(registerRepositoriesIn:139) - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2024-01-16 17:17:34,221 [main] INFO  org.springframework.data.repository.config.RepositoryConfigurationDelegate(registerRepositoriesIn:208) - Finished Spring Data repository scanning in 118 ms. Found 12 JPA repository interfaces.
@@ -46,8 +46,8 @@
 2024-01-16 17:18:35,486 [restartedMain] INFO  org.springframework.scheduling.quartz.SchedulerFactoryBean(startScheduler:729) - Starting Quartz Scheduler now
 2024-01-16 17:45:45,952 [SpringApplicationShutdownHook] INFO  org.springframework.scheduling.quartz.SchedulerFactoryBean(destroy:847) - Shutting down Quartz Scheduler
 2024-01-16 17:45:45,954 [SpringApplicationShutdownHook] INFO  org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean(destroy:650) - Closing JPA EntityManagerFactory for persistence unit 'default'
-2024-01-16 17:48:22,641 [main] INFO  org.springframework.test.context.support.AnnotationConfigContextLoaderUtils(detectDefaultConfigurationClasses:83) - Could not detect default configuration classes for test class [com.fekim.workweout.batch.JobTest]: JobTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2024-01-16 17:48:22,775 [main] INFO  org.springframework.boot.test.context.SpringBootTestContextBootstrapper(getOrFindConfigurationClasses:234) - Found @SpringBootConfiguration com.fekim.workweout.WorkWeOutApplication for test class com.fekim.workweout.batch.JobTest
+2024-01-16 17:48:22,641 [main] INFO  org.springframework.test.context.support.AnnotationConfigContextLoaderUtils(detectDefaultConfigurationClasses:83) - Could not detect default configuration classes for test class [com.fekim.workweout.batch.job.JobTest]: JobTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2024-01-16 17:48:22,775 [main] INFO  org.springframework.boot.test.context.SpringBootTestContextBootstrapper(getOrFindConfigurationClasses:234) - Found @SpringBootConfiguration com.fekim.workweout.WorkWeOutApplication for test class com.fekim.workweout.batch.job.JobTest
 2024-01-16 17:48:23,848 [main] INFO  org.springframework.batch.core.configuration.annotation.BatchRegistrar(registerBeanDefinitions:70) - Finished Spring Batch infrastructure beans configuration in 5 ms.
 2024-01-16 17:48:24,103 [main] INFO  org.springframework.data.repository.config.RepositoryConfigurationDelegate(registerRepositoriesIn:139) - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2024-01-16 17:48:24,225 [main] INFO  org.springframework.data.repository.config.RepositoryConfigurationDelegate(registerRepositoriesIn:208) - Finished Spring Data repository scanning in 113 ms. Found 12 JPA repository interfaces.
@@ -86,7 +86,7 @@ org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating
 	at org.springframework.core.task.SyncTaskExecutor.execute(SyncTaskExecutor.java:50) ~[spring-core-6.1.2.jar:6.1.2]
 	at org.springframework.batch.core.launch.support.SimpleJobLauncher.run(SimpleJobLauncher.java:148) ~[spring-batch-core-5.1.0.jar:5.1.0]
 	at org.springframework.batch.core.launch.support.TaskExecutorJobLauncher.run(TaskExecutorJobLauncher.java:59) ~[spring-batch-core-5.1.0.jar:5.1.0]
-	at com.fekim.workweout.batch.JobTest.WeeklyStatSmsDendJobTest(JobTest.java:31) ~[test/:?]
+	at com.fekim.workweout.batch.job.JobTest.WeeklyStatSmsDendJobTest(JobTest.java:31) ~[test/:?]
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
@@ -177,8 +177,8 @@ Caused by: java.lang.IllegalStateException: Cannot convert value of type 'java.u
 2024-01-16 17:48:29,834 [main] INFO  org.springframework.batch.core.launch.support.SimpleJobLauncher(run:161) - Job: [SimpleJob: [name=WeeklyStatSmsSendJob]] completed with the following parameters: [{'reSendYn':'{value=N, type=class java.lang.String, identifying=true}','yyyyMmW':'{value=2024012, type=class java.lang.String, identifying=true}'}] and the following status: [FAILED] in 122ms
 2024-01-16 17:48:29,854 [SpringApplicationShutdownHook] INFO  org.springframework.scheduling.quartz.SchedulerFactoryBean(destroy:847) - Shutting down Quartz Scheduler
 2024-01-16 17:48:29,856 [SpringApplicationShutdownHook] INFO  org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean(destroy:650) - Closing JPA EntityManagerFactory for persistence unit 'default'
-2024-01-16 17:49:56,440 [main] INFO  org.springframework.test.context.support.AnnotationConfigContextLoaderUtils(detectDefaultConfigurationClasses:83) - Could not detect default configuration classes for test class [com.fekim.workweout.batch.JobTest]: JobTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2024-01-16 17:49:56,561 [main] INFO  org.springframework.boot.test.context.SpringBootTestContextBootstrapper(getOrFindConfigurationClasses:234) - Found @SpringBootConfiguration com.fekim.workweout.WorkWeOutApplication for test class com.fekim.workweout.batch.JobTest
+2024-01-16 17:49:56,440 [main] INFO  org.springframework.test.context.support.AnnotationConfigContextLoaderUtils(detectDefaultConfigurationClasses:83) - Could not detect default configuration classes for test class [com.fekim.workweout.batch.job.JobTest]: JobTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2024-01-16 17:49:56,561 [main] INFO  org.springframework.boot.test.context.SpringBootTestContextBootstrapper(getOrFindConfigurationClasses:234) - Found @SpringBootConfiguration com.fekim.workweout.WorkWeOutApplication for test class com.fekim.workweout.batch.job.JobTest
 2024-01-16 17:49:57,733 [main] INFO  org.springframework.batch.core.configuration.annotation.BatchRegistrar(registerBeanDefinitions:70) - Finished Spring Batch infrastructure beans configuration in 5 ms.
 2024-01-16 17:49:58,017 [main] INFO  org.springframework.data.repository.config.RepositoryConfigurationDelegate(registerRepositoriesIn:139) - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
 2024-01-16 17:49:58,138 [main] INFO  org.springframework.data.repository.config.RepositoryConfigurationDelegate(registerRepositoriesIn:208) - Finished Spring Data repository scanning in 112 ms. Found 12 JPA repository interfaces.
@@ -222,7 +222,7 @@ java.security.InvalidParameterException: null
 	at org.springframework.core.task.SyncTaskExecutor.execute(SyncTaskExecutor.java:50) ~[spring-core-6.1.2.jar:6.1.2]
 	at org.springframework.batch.core.launch.support.SimpleJobLauncher.run(SimpleJobLauncher.java:148) ~[spring-batch-core-5.1.0.jar:5.1.0]
 	at org.springframework.batch.core.launch.support.TaskExecutorJobLauncher.run(TaskExecutorJobLauncher.java:59) ~[spring-batch-core-5.1.0.jar:5.1.0]
-	at com.fekim.workweout.batch.JobTest.WeeklyStatSmsDendJobTest(JobTest.java:31) ~[test/:?]
+	at com.fekim.workweout.batch.job.JobTest.WeeklyStatSmsDendJobTest(JobTest.java:31) ~[test/:?]
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:?]
 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[?:?]
 	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:?]
