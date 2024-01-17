@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @SpringBootTest
@@ -22,7 +23,7 @@ public class StatRepositoryTest {
                         .builder()
                         .cuofYyyy("2024")
                         .cuofMm("01")
-                        .cuofWeek("1")
+                        .cuofWeek("2")
                         .build()
         );
 
@@ -48,13 +49,16 @@ public class StatRepositoryTest {
     void findWeelMethodWeiIncs() {
         List<Object[]> objects = statRepository.findWeeklyMethodWeiIncs(
                 1L,
-                YyyyMmW.builder().cuofYyyy("2024").cuofMm("01").cuofWeek("1").build(),
-                YyyyMmW.builder().cuofYyyy("2024").cuofMm("01").cuofWeek("2").build()
+                YyyyMmW.builder().cuofYyyy("2024").cuofMm("01").cuofWeek("2").build(),
+                YyyyMmW.builder().cuofYyyy("2024").cuofMm("01").cuofWeek("1").build()
         );
 
         System.out.println("================list start================");
         for (Object[] object : objects) {
-            System.out.println(object[0]+"/"+object[1]+"/"+object[2]+"/"+object[3]+"/"+object[4]);
+            System.out.println(String.valueOf(object[1]));
+            System.out.println(((BigDecimal)object[2]).longValue());
+            System.out.println(((BigDecimal)object[3]).longValue());
+            System.out.println(((BigDecimal)object[4]).longValue());
             System.out.println();
         }
         System.out.println("================list end================");

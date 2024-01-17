@@ -20,34 +20,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query(value = "" +
             "select M " +
             "from Member M " +
-            "join WkoutJnal J on M.mbrId = J.member.mbrId " +
-            "join Date D " +
-            "  on D.yyyyMmDd.yyyy = J.yyyyMmDd.yyyy " +
-            " and D.yyyyMmDd.mm = J.yyyyMmDd.mm " +
-            "where D.yyyyMmDd.dd = J.yyyyMmDd.dd " +
-            "  and D.yyyyMmW.cuofYyyy = :cuofYyyy " +
-            "  and D.yyyyMmW.cuofMm = :cuofMm " +
-            "  and D.yyyyMmW.cuofWeek = :cuofWeek " +
-            "group by M.mbrId " +
-            "order by M.mbrId ")
-    List<Member> findMemberList (@Param("cuofYyyy") String cuofYyyy,
-                                 @Param("cuofMm") String cuofMm,
-                                 @Param("cuofWeek") String cuofWeek);
-
-    @Query(value = "" +
-            "select M " +
-            "from Member M " +
-            "join WeeklyWkoutStatRslt WR " +
-            "  on WR.yyyyMmWMbr.mbrId = M.mbrId " +
-            "where WR.yyyyMmWMbr.yyyyMmW.cuofYyyy = :cuofYyyy " +
-            "  and WR.yyyyMmWMbr.yyyyMmW.cuofMm = :cuofMm " +
-            "  and WR.yyyyMmWMbr.yyyyMmW.cuofWeek = :cuofWeek " +
-            "  and WR.smsSendRsltClsfCd = '02' " +
-            "group by M.mbrId " +
-            "order by M.mbrId ")
-    List<Member> findMemberList2 (@Param("cuofYyyy") String cuofYyyy,
-                                 @Param("cuofMm") String cuofMm,
-                                 @Param("cuofWeek") String cuofWeek);
+            "where M.mbrId = :#{#mbrId} " +
+            "  and M.statSmsSendYn = 'Y' ")
+    Member findSmsReceiverById(@Param("mbrId") Long mbrId);
 
 
 }

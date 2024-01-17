@@ -1,6 +1,9 @@
 package com.fekim.workweout.batch.job;
 
+import com.fekim.workweout.batch.job.util.SmsUtil;
+import com.fekim.workweout.batch.repository.date.DateRepository;
 import com.fekim.workweout.batch.repository.date.entity.key.YyyyMmW;
+import com.fekim.workweout.batch.repository.member.MemberRepository;
 import com.fekim.workweout.batch.repository.member.entity.Member;
 import com.fekim.workweout.batch.repository.stat.StatRepository;
 import com.fekim.workweout.batch.repository.stat.WeeklyWkoutStatRsltRepository;
@@ -12,6 +15,7 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import net.nurigo.sdk.message.response.SingleMessageSentResponse;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -27,6 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.math.BigDecimal;
 import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +57,9 @@ public class WeeklyStatSmsSendJob {
     private final WeeklyWkoutStatScheduleRepository weeklyWkoutStatScheduleRepository;
     private final WeeklyWkoutStatRsltRepository weeklyWkoutStatRsltRepository;
     private final StatRepository statRepository;
+    private final DateRepository dateRepository;
+    private final MemberRepository memberRepository;
+    private final SmsUtil smsUtil;
 
     int chunkSize = 1000;
 
@@ -111,11 +119,11 @@ public class WeeklyStatSmsSendJob {
 
         return member -> {
 
-            System.out.println("[DEBUG]====================Processor Start====================");
-            System.out.println("[DEBUG] Member Info ↓↓↓↓ ");
-            System.out.println("[DEBUG] mbrId : " + member.getMbrId());
-            System.out.println("[DEBUG] mbrNm : " + member.getMbrNm());
-            System.out.println("[DEBUG]=======================================================");
+            log.debug("[DEBUG]====================Processor Start====================");
+            log.debug("[DEBUG] Member Info ↓↓↓↓ ");
+            log.debug("[DEBUG] mbrId : " + member.getMbrId());
+            log.debug("[DEBUG] mbrNm : " + member.getMbrNm());
+            log.debug("[DEBUG]=======================================================");
 
             Long mbrId = member.getMbrId();
             String statRsltTitle = "";
@@ -128,12 +136,17 @@ public class WeeklyStatSmsSendJob {
                 statRsltTitle = makeStatRsltTitle(yyyyMmW);
 
                 // (1-3) 문자 내용 생성
-                statRsltContent = makeStatRsltContent(member.getMbrId(), yyyyMmW);
+                statRsltContent = statRsltTitle
+                                + "\n\n"
+                                + makeStatRsltContent(member.getMbrId(), yyyyMmW);
 
                 // (1-3) 처리결과[01:정상] 설정
                 smsSendRsltClsfCd = "01";
 
             } catch (Exception e) {  // 처리중 오류가 발생할 경우 [02:발송실패] 처리한다.
+                log.error("[ERROR]====================Error Occured In Stat Processing====================");
+                log.error("[ERROR]====================Error Occured In Stat Processing====================");
+
                 smsSendRsltClsfCd = "02";
             }
 
@@ -160,16 +173,33 @@ public class WeeklyStatSmsSendJob {
     public ItemWriter<WeeklyWkoutStatRslt> writer_step01_WeeklyStatSmsSendJob(@Value("#{jobParameters[yyyyMmW]}") String yyyyMmW) {
         return results -> {
             for(WeeklyWkoutStatRslt weeklyWkoutStatRslt : results){
-                System.out.println("[DEBUG]====================ItemWriter Start====================");
-                System.out.println("[DEBUG] Week Info : " + yyyyMmW.toString());
-                System.out.println("[DEBUG] Stat Result Info ↓↓↓↓ ");
-                System.out.println("[DEBUG]  - Member Id : " + weeklyWkoutStatRslt.getYyyyMmWMbr().getMbrId());
-                System.out.println("[DEBUG]  - SMS Title : \n" + weeklyWkoutStatRslt.getStatRsltTitle());
-                System.out.println("[DEBUG]  - SMS Content : " + weeklyWkoutStatRslt.getStatRsltContent());
-                System.out.println("[DEBUG]  - SMS Send Status : " + weeklyWkoutStatRslt.getSmsSendRsltClsfCd());
-                System.out.println("[DEBUG]========================================================");
+                // (0) Logging
+                log.debug("[DEBUG]====================ItemWriter Start====================");
+                log.debug("[DEBUG] Week Info : " + yyyyMmW.toString());
+                log.debug("[DEBUG] Stat Result Info ↓↓↓↓ ");
+                log.debug("[DEBUG]  - Member Id : " + weeklyWkoutStatRslt.getYyyyMmWMbr().getMbrId());
+                log.debug("[DEBUG]  - SMS Title : " + weeklyWkoutStatRslt.getStatRsltTitle());
+                log.debug("[DEBUG]  - SMS Content : \n" + weeklyWkoutStatRslt.getStatRsltContent());
+                log.debug("[DEBUG]  - SMS Send Status : " + weeklyWkoutStatRslt.getSmsSendRsltClsfCd());
+                log.debug("[DEBUG]========================================================");
 
-                // 통계결과 DB에 반영한다.
+                try {
+                    // (1) 문자발송한다.
+                    Member receiver = memberRepository.findSmsReceiverById(weeklyWkoutStatRslt.getYyyyMmWMbr().getMbrId());
+                    SingleMessageSentResponse smsResponse = smsUtil.sendSms(
+                            "01090374099",
+                            receiver.getPhone(),
+                            weeklyWkoutStatRslt.getStatRsltContent()
+                    );
+
+                } catch (Exception e) {
+                    log.error("[ERROR]====================Error Occured In Send message Processing====================");
+                    log.error("[ERROR]====================Error Occured In Send message Processing====================");
+
+                    weeklyWkoutStatRslt.setSmsSendRsltClsfCd("02");
+                }
+
+                // (2) 통계/문자발송 결과 DB에 반영한다.
                 weeklyWkoutStatRsltRepository.save(weeklyWkoutStatRslt);
             }
         };
@@ -194,11 +224,11 @@ public class WeeklyStatSmsSendJob {
                     throw new InvalidParameterException();
                 }
 
-                System.out.println("[DEBUG]====================BeforeJob Start====================");
-                System.out.println("[DEBUG] Parameter Info ↓↓↓↓ ");
-                System.out.println("[DEBUG]  - yyyyMmW : " + yyyyMmW);
-                System.out.println("[DEBUG]  - reSendYn : " + reSendYn);
-                System.out.println("[DEBUG]========================================================");
+                log.debug("[DEBUG]====================BeforeJob Start====================");
+                log.debug("[DEBUG] Parameter Info ↓↓↓↓ ");
+                log.debug("[DEBUG]  - yyyyMmW : " + yyyyMmW);
+                log.debug("[DEBUG]  - reSendYn : " + reSendYn);
+                log.debug("[DEBUG]========================================================");
 
 
                 // (1) 정기배치에 의해 실행된 경우
@@ -241,7 +271,6 @@ public class WeeklyStatSmsSendJob {
         };
     }
 
-
     /* (String)yyyyMmW -> (YyyyMmW)yyyyMmW */
     private YyyyMmW makeYyyyMmW(String yyyyMmW) {
         String curYyyy = yyyyMmW.substring(0, 4);
@@ -271,6 +300,7 @@ public class WeeklyStatSmsSendJob {
                      "where D.yyyyMmW.cuofYyyy = :cuofYyyy " +
                      "  and D.yyyyMmW.cuofMm = :cuofMm " +
                      "  and D.yyyyMmW.cuofWeek = :cuofWeek " +
+                     "  and M.statSmsSendYn = 'Y' " +
                      "group by M.mbrId " +
                      "order by M.mbrId ";
         } else if (reSendYn.equals("Y")) { // (2) 재처리인 경우
@@ -282,6 +312,7 @@ public class WeeklyStatSmsSendJob {
                     "  and WR.yyyyMmWMbr.yyyyMmW.cuofMm = :cuofMm " +
                     "  and WR.yyyyMmWMbr.yyyyMmW.cuofWeek = :cuofWeek " +
                     "  and WR.smsSendRsltClsfCd = '02' " +
+                    "  and M.statSmsSendYn = 'Y' " +
                     "group by M.mbrId " +
                     "order by M.mbrId ";
         } else {
@@ -295,33 +326,60 @@ public class WeeklyStatSmsSendJob {
     String makeStatRsltTitle(String yyyyMmW) {
         YyyyMmW curYyyyMmW = makeYyyyMmW(yyyyMmW);
 
-        return "[Work We Out] " +
-                curYyyyMmW.getCuofYyyy() + 
-                "년 " + 
-                curYyyyMmW.getCuofMm() +
-                "월 " +
-                curYyyyMmW.getCuofWeek() + 
-                "주차 운동통계";
+        return new StringBuilder()
+                .append("[Work We Out] ")
+                .append(curYyyyMmW.getCuofYyyy())
+                .append("년 ")
+                .append(curYyyyMmW.getCuofMm())
+                .append("월 ")
+                .append(curYyyyMmW.getCuofWeek())
+                .append("주차 운동통계")
+                .toString();
     }
 
     /* 문자 내용 생성 */
     String makeStatRsltContent(Long mbrId, String yyyyMmW) {
 
-        String content = "";
+        StringBuilder content = new StringBuilder();
 
         YyyyMmW cuofYyyyMmW = makeYyyyMmW(yyyyMmW);
 
         /* 1. 운동부위별 총 세트수 */
         List<Object[]> totalSets = statRepository.findWeeklyMethodTotalSets(mbrId, cuofYyyyMmW);
-        content += "[1. 운동부위별 총 세트수]\n";
+        content.append("[1. 운동부위별 총 세트수]\n");
         for (Object[] totalSet : totalSets) {
-            content += " ▶ " + (String)totalSet[0];
-            content += " : " + String.valueOf((Long)totalSet[1]) + "kg\n";
+            content.append(" ▶ ").append(String.valueOf(totalSet[0]));
+            content.append(" : ").append(String.valueOf(totalSet[1])).append("set\n");
         }
+        content.append("\n");
 
         /* 2. 운동종목별 중량증감 */
+        //  2-1. 이전 Week 정보 조회
+        List<Object[]> bfYyyyMmWEntity = dateRepository.findBeforeCuofYyyyMmW(cuofYyyyMmW, 1L);
+        YyyyMmW bfYyyyMmW = YyyyMmW.builder()
+                .cuofYyyy(String.valueOf(bfYyyyMmWEntity.get(0)[0]))
+                .cuofMm(String.valueOf(bfYyyyMmWEntity.get(0)[1]))
+                .cuofWeek(String.valueOf(bfYyyyMmWEntity.get(0)[2]))
+                .build();
+        //  2-2. 중량증감 생성
+        List<Object[]> weeklyMethodWeiIncs = statRepository.findWeeklyMethodWeiIncs(mbrId, bfYyyyMmW, cuofYyyyMmW);
+        content.append("[2. 전 주 대비 운동종목별 중량 상승 추이]\n");
+        for (Object[] weiInc : weeklyMethodWeiIncs) {
 
-        return content;
+            String methodNm = String.valueOf(weiInc[1]);
+            Long bfWei = ((BigDecimal)weiInc[2]).longValue();
+            Long curWei = ((BigDecimal)weiInc[3]).longValue();
+            Long incWei = ((BigDecimal)weiInc[4]).longValue();
+            String incDec = incWei >= 0 ? "증가" : "감소";
+
+            content.append(" ▶ ").append(methodNm).append("\n");
+            content.append("  - 이전 주 최대무게 : ").append(bfWei).append("kg\n");
+            content.append("  - 이번 주 최대무게 : ").append(curWei).append("kg\n");
+            content.append("   → 1주일간 ").append(incWei).append("kg ").append(incDec).append("하였습니다.\n");
+        }
+        content.append("\n");
+
+        return content.toString();
     }
 
 }
