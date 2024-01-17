@@ -2,15 +2,13 @@ package com.fekim.workweout.batch.job;
 
 import com.fekim.workweout.batch.job.util.SmsUtil;
 import com.fekim.workweout.batch.repository.date.DateRepository;
-import com.fekim.workweout.batch.repository.date.entity.key.YyyyMmW;
+import com.fekim.workweout.batch.repository.date.entity.key.YyyyMm;
 import com.fekim.workweout.batch.repository.member.MemberRepository;
 import com.fekim.workweout.batch.repository.member.entity.Member;
-import com.fekim.workweout.batch.repository.stat.StatRepository;
-import com.fekim.workweout.batch.repository.stat.WeeklyWkoutStatRsltRepository;
-import com.fekim.workweout.batch.repository.stat.WeeklyWkoutStatScheduleRepository;
-import com.fekim.workweout.batch.repository.stat.entity.WeeklyWkoutStatRslt;
-import com.fekim.workweout.batch.repository.stat.entity.WeeklyWkoutStatSchedule;
-import com.fekim.workweout.batch.repository.stat.entity.key.YyyyMmWMbr;
+import com.fekim.workweout.batch.repository.stat.*;
+import com.fekim.workweout.batch.repository.stat.entity.MonthlyWkoutStatRslt;
+import com.fekim.workweout.batch.repository.stat.entity.MonthlyWkoutStatSchedule;
+import com.fekim.workweout.batch.repository.stat.entity.key.YyyyMmMbr;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +20,8 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.item.*;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -39,23 +38,23 @@ import java.util.Map;
 
 
 /**
- * 01. 개인주간운동통계문자발송
- *  - 파라미터 : [ (1)Week정보 , (2)정기배치/온디맨드배치 구분코드 ]
+ * 01. 개인월간운동통계문자발송
+ *  - 파라미터 : [ (1)Month정보 , (2)정기배치/온디맨드배치 구분코드 ]
  *  - In/Out 타입 : DB to DB
- *  - In/Out 상세 : 회원기본 to 주간운동통계내역
+ *  - In/Out 상세 : 회원기본 to 월간운동통계내역
  *  - 타입 : Chunk-Oriented
- *  - 청크 크기 : 1
- *  - 스케줄 : 매주 월요일 08:40
- *  - 처리대상 : 회원의 전 Week 월요일~일요일 운동일지
+ *  - 청크 크기 : 1000
+ *  - 스케줄 : 매월 1일 월요일 08:40
+ *  - 처리대상 : 회원의 전 Month 운동일지
  * */
 @Log4j2
 @RequiredArgsConstructor
 @Configuration
-public class WeeklyStatSmsSendJob {
+public class MonthlyStatSmsSendJob {
 
     private final EntityManagerFactory entityManagerFactory;
-    private final WeeklyWkoutStatScheduleRepository weeklyWkoutStatScheduleRepository;
-    private final WeeklyWkoutStatRsltRepository weeklyWkoutStatRsltRepository;
+    private final MonthlyWkoutStatScheduleRepository monthlyWkoutStatScheduleRepository;
+    private final MonthlyWkoutStatRsltRepository monthlyWkoutStatRsltRepository;
     private final StatRepository statRepository;
     private final DateRepository dateRepository;
     private final MemberRepository memberRepository;
@@ -63,48 +62,50 @@ public class WeeklyStatSmsSendJob {
 
     int chunkSize = 1000;
 
-    @Qualifier("WeeklyStatSmsSendJob")
     @Bean
-    public Job job_WeeklyStatSmsSendJob(JobRepository jobRepository, Step step01) {
-        return new JobBuilder("WeeklyStatSmsSendJob", jobRepository)
+    @Qualifier("MonthlyStatSmsSendJob")
+    public Job job_MonthlyStatSmsSendJob(JobRepository jobRepository,
+                                         @Qualifier("step01_MonthlyStatSmsSendJob") Step step01,
+                                         @Qualifier("monthlyExecutionListener") JobExecutionListener jobExecutionListener) {
+        return new JobBuilder("MonthlyStatSmsSendJob", jobRepository)
                 .start(step01)
-                .listener(jobExecutionListener())
+                .listener(jobExecutionListener)
                 .build();
     }
 
     @JobScope
     @Bean
-    public Step step01_WeeklyStatSmsSendJob(JobRepository jobRepository,
+    @Qualifier("step01_MonthlyStatSmsSendJob")
+    public Step step01_MonthlyStatSmsSendJob(JobRepository jobRepository,
                                             PlatformTransactionManager transactionManager,
-                                            @Value("#{jobParameters[yyyyMmW]}") String yyyyMmW,
+                                            @Value("#{jobParameters[yyyyMm]}") String yyyyMm,
                                             @Value("#{jobParameters[reSendYn]}") String reSendYn) {
         return new StepBuilder("step01", jobRepository)
-                .<Member, WeeklyWkoutStatRslt>chunk(chunkSize, transactionManager)
-                .reader(reader_step01_WeeklyStatSmsSendJob(yyyyMmW, reSendYn))
-                .processor(processor_step01_WeeklyStatSmsSendJob(yyyyMmW))
-                .writer(writer_step01_WeeklyStatSmsSendJob(yyyyMmW))
+                .<Member, MonthlyWkoutStatRslt>chunk(chunkSize, transactionManager)
+                .reader(reader_step01_MonthlyStatSmsSendJob(yyyyMm, reSendYn))
+                .processor(processor_step01_MonthlyStatSmsSendJob(yyyyMm))
+                .writer(writer_step01_MonthlyStatSmsSendJob(yyyyMm))
                 .build();
     }
 
     @StepScope
     @Bean
-    public JpaPagingItemReader<Member> reader_step01_WeeklyStatSmsSendJob(@Value("#{jobParameters[yyyyMmW]}") String yyyyMmW,
+    public JpaPagingItemReader<Member> reader_step01_MonthlyStatSmsSendJob(@Value("#{jobParameters[yyyyMm]}") String yyyyMm,
                                                                           @Value("#{jobParameters[reSendYn]}") String reSendYn) {
-        // (1) 기준Week Key로 변환
-        YyyyMmW cuofYyyyMmW = makeYyyyMmW(yyyyMmW);
+        // (1) 기준Month Key로 변환
+        YyyyMm cuofYyyyMm = makeYyyyMm(yyyyMm);
 
         // (2) 대상추출 SQL 생성
         String queryString = makeReadQuery(reSendYn);
 
         // (3) SQL where절 파라미터 생성
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("cuofYyyy", cuofYyyyMmW.getCuofYyyy());
-        parameters.put("cuofMm", cuofYyyyMmW.getCuofMm());
-        parameters.put("cuofWeek", cuofYyyyMmW.getCuofWeek());
+        parameters.put("cuofYyyy", cuofYyyyMm.getCuofYyyy());
+        parameters.put("cuofMm", cuofYyyyMm.getCuofMm());
 
         // (4) 최종 ItemReader 생성
         return new JpaPagingItemReaderBuilder<Member>()
-                .name("reader_step01_WeeklyStatSmsSendJob")
+                .name("reader_step01_MonthlyStatSmsSendJob")
                 .entityManagerFactory(entityManagerFactory)
                 .pageSize(chunkSize)
                 .queryString(queryString)
@@ -113,9 +114,9 @@ public class WeeklyStatSmsSendJob {
     }
     @StepScope
     @Bean
-    public ItemProcessor<Member, WeeklyWkoutStatRslt> processor_step01_WeeklyStatSmsSendJob(@Value("#{jobParameters[yyyyMmW]}") String yyyyMmW) {
+    public ItemProcessor<Member, MonthlyWkoutStatRslt> processor_step01_MonthlyStatSmsSendJob(@Value("#{jobParameters[yyyyMm]}") String yyyyMm) {
 
-        YyyyMmW cuofYyyyMmW = makeYyyyMmW(yyyyMmW);
+        YyyyMm cuofYyyyMm = makeYyyyMm(yyyyMm);
 
         return member -> {
 
@@ -133,12 +134,12 @@ public class WeeklyStatSmsSendJob {
             // (1) 통계결과 생성
             try {
                 // (1-1) 문자 제목 생성
-                statRsltTitle = makeStatRsltTitle(yyyyMmW);
+                statRsltTitle = makeStatRsltTitle(yyyyMm);
 
                 // (1-3) 문자 내용 생성
                 statRsltContent = statRsltTitle
                                 + "\n\n"
-                                + makeStatRsltContent(member.getMbrId(), yyyyMmW);
+                                + makeStatRsltContent(member.getMbrId(), yyyyMm);
 
                 // (1-3) 처리결과[01:정상] 설정
                 smsSendRsltClsfCd = "01";
@@ -151,12 +152,11 @@ public class WeeklyStatSmsSendJob {
             }
 
             // (2) 통계결과 조립
-            return WeeklyWkoutStatRslt.builder()
-                    .yyyyMmWMbr(YyyyMmWMbr.builder()
-                            .yyyyMmW(YyyyMmW.builder()
-                                    .cuofYyyy(cuofYyyyMmW.getCuofYyyy())
-                                    .cuofMm(cuofYyyyMmW.getCuofMm())
-                                    .cuofWeek(cuofYyyyMmW.getCuofWeek())
+            return MonthlyWkoutStatRslt.builder()
+                    .yyyyMmMbr(YyyyMmMbr.builder()
+                            .yyyyMm(YyyyMm.builder()
+                                    .cuofYyyy(cuofYyyyMm.getCuofYyyy())
+                                    .cuofMm(cuofYyyyMm.getCuofMm())
                                     .build())
                             .mbrId(mbrId)
                             .build())
@@ -170,37 +170,37 @@ public class WeeklyStatSmsSendJob {
 
     @StepScope
     @Bean
-    public ItemWriter<WeeklyWkoutStatRslt> writer_step01_WeeklyStatSmsSendJob(@Value("#{jobParameters[yyyyMmW]}") String yyyyMmW) {
+    public ItemWriter<MonthlyWkoutStatRslt> writer_step01_MonthlyStatSmsSendJob(@Value("#{jobParameters[yyyyMm]}") String yyyyMm) {
         return results -> {
-            for(WeeklyWkoutStatRslt weeklyWkoutStatRslt : results){
+            for(MonthlyWkoutStatRslt monthlyWkoutStatRslt : results){
                 // (0) Logging
                 log.debug("[DEBUG]====================ItemWriter Start====================");
-                log.debug("[DEBUG] Week Info : " + yyyyMmW.toString());
+                log.debug("[DEBUG] Month Info : " + yyyyMm.toString());
                 log.debug("[DEBUG] Stat Result Info ↓↓↓↓ ");
-                log.debug("[DEBUG]  - Member Id : " + weeklyWkoutStatRslt.getYyyyMmWMbr().getMbrId());
-                log.debug("[DEBUG]  - SMS Title : " + weeklyWkoutStatRslt.getStatRsltTitle());
-                log.debug("[DEBUG]  - SMS Content : \n" + weeklyWkoutStatRslt.getStatRsltContent());
-                log.debug("[DEBUG]  - SMS Send Status : " + weeklyWkoutStatRslt.getSmsSendRsltClsfCd());
+                log.debug("[DEBUG]  - Member Id : " + monthlyWkoutStatRslt.getYyyyMmMbr().getMbrId());
+                log.debug("[DEBUG]  - SMS Title : " + monthlyWkoutStatRslt.getStatRsltTitle());
+                log.debug("[DEBUG]  - SMS Content : \n" + monthlyWkoutStatRslt.getStatRsltContent());
+                log.debug("[DEBUG]  - SMS Send Status : " + monthlyWkoutStatRslt.getSmsSendRsltClsfCd());
                 log.debug("[DEBUG]========================================================");
 
                 try {
                     // (1) 문자발송한다.
-                    Member receiver = memberRepository.findSmsReceiverById(weeklyWkoutStatRslt.getYyyyMmWMbr().getMbrId());
+                    Member receiver = memberRepository.findSmsReceiverById(monthlyWkoutStatRslt.getYyyyMmMbr().getMbrId());
                     SingleMessageSentResponse smsResponse = smsUtil.sendSms(
                             "01090374099",
                             receiver.getPhone(),
-                            weeklyWkoutStatRslt.getStatRsltContent()
+                            monthlyWkoutStatRslt.getStatRsltContent()
                     );
 
                 } catch (Exception e) {
                     log.error("[ERROR]====================Error Occured In Send message Processing====================");
                     log.error("[ERROR]====================Error Occured In Send message Processing====================");
 
-                    weeklyWkoutStatRslt.setSmsSendRsltClsfCd("02");
+                    monthlyWkoutStatRslt.setSmsSendRsltClsfCd("02");
                 }
 
                 // (2) 통계/문자발송 결과 DB에 반영한다.
-                weeklyWkoutStatRsltRepository.save(weeklyWkoutStatRslt);
+                monthlyWkoutStatRsltRepository.save(monthlyWkoutStatRslt);
             }
         };
     }
@@ -208,17 +208,18 @@ public class WeeklyStatSmsSendJob {
     /* 전/후 처리 */
     @JobScope
     @Bean
-    public JobExecutionListener jobExecutionListener() {
+    @Qualifier("monthlyExecutionListener")
+    public JobExecutionListener monthlyExecutionListener() {
 
         return new JobExecutionListener() {
 
             @Override
             public void beforeJob(JobExecution jobExecution) throws InvalidParameterException {
-                String yyyyMmW = jobExecution.getJobParameters().getString("yyyyMmW");
+                String yyyyMm = jobExecution.getJobParameters().getString("yyyyMm");
                 String reSendYn = jobExecution.getJobParameters().getString("reSendYn");
 
                 // (0) 입력값 체크
-                if (yyyyMmW == null || yyyyMmW.isEmpty()
+                if (yyyyMm == null || yyyyMm.isEmpty()
                         || reSendYn == null || reSendYn.isEmpty()) {
                     jobExecution.setExitStatus(ExitStatus.FAILED);
                     throw new InvalidParameterException();
@@ -226,7 +227,7 @@ public class WeeklyStatSmsSendJob {
 
                 log.debug("[DEBUG]====================BeforeJob Start====================");
                 log.debug("[DEBUG] Parameter Info ↓↓↓↓ ");
-                log.debug("[DEBUG]  - yyyyMmW : " + yyyyMmW);
+                log.debug("[DEBUG]  - yyyyMm : " + yyyyMm);
                 log.debug("[DEBUG]  - reSendYn : " + reSendYn);
                 log.debug("[DEBUG]========================================================");
 
@@ -235,7 +236,7 @@ public class WeeklyStatSmsSendJob {
                 //  - 재작업 방지를 위해 문자발송작업 완료여부를 체크한다.
                 if (reSendYn.equals("N")) {
 
-                    WeeklyWkoutStatSchedule schedule = weeklyWkoutStatScheduleRepository.findById(makeYyyyMmW(yyyyMmW)).get();
+                    MonthlyWkoutStatSchedule schedule = monthlyWkoutStatScheduleRepository.findById(makeYyyyMm(yyyyMm)).get();
 
                     // 이미 문자발송작업이 완료된 스케줄이라면 배치를 종료한다.
                     if (schedule.getStatCplnYn().equals("Y")) {
@@ -251,14 +252,14 @@ public class WeeklyStatSmsSendJob {
             @Override
             @Transactional
             public void afterJob(JobExecution jobExecution) {
-                String yyyyMmW = jobExecution.getJobParameters().getString("yyyyMmW");
+                String yyyyMm = jobExecution.getJobParameters().getString("yyyyMm");
                 String reSendYn = jobExecution.getJobParameters().getString("reSendYn");
 
                 // (1) 정기배치에 의해 실행된 경우
                 //  - 작업이 완료되면 작업완료여부를 갱신한다.
                 if (reSendYn.equals("N")) {
 
-                    WeeklyWkoutStatSchedule schedule = weeklyWkoutStatScheduleRepository.findById(makeYyyyMmW(yyyyMmW)).get();
+                    MonthlyWkoutStatSchedule schedule = monthlyWkoutStatScheduleRepository.findById(makeYyyyMm(yyyyMm)).get();
 
                     schedule.setStatCplnYn("Y"); // dirty-checking
                 }
@@ -271,17 +272,15 @@ public class WeeklyStatSmsSendJob {
         };
     }
 
-    /* (String)yyyyMmW -> (YyyyMmW)yyyyMmW */
-    private YyyyMmW makeYyyyMmW(String yyyyMmW) {
-        String curYyyy = yyyyMmW.substring(0, 4);
-        String curMm = yyyyMmW.substring(4,6);
-        String curWeek = yyyyMmW.substring(6,7);
+    /* (String)yyyyMm -> (YyyyMm)yyyyMm */
+    private YyyyMm makeYyyyMm(String yyyyMm) {
+        String curYyyy = yyyyMm.substring(0, 4);
+        String curMm = yyyyMm.substring(4,6);
 
-        return YyyyMmW
+        return YyyyMm
                 .builder()
                 .cuofYyyy(curYyyy)
                 .cuofMm(curMm)
-                .cuofWeek(curWeek)
                 .build();
     }
     
@@ -299,18 +298,16 @@ public class WeeklyStatSmsSendJob {
                      " and D.yyyyMmDd.dd = J.yyyyMmDd.dd " +
                      "where D.yyyyMmW.cuofYyyy = :cuofYyyy " +
                      "  and D.yyyyMmW.cuofMm = :cuofMm " +
-                     "  and D.yyyyMmW.cuofWeek = :cuofWeek " +
                      "  and M.statSmsSendYn = 'Y' " +
                      "group by M.mbrId " +
                      "order by M.mbrId ";
         } else if (reSendYn.equals("Y")) { // (2) 재처리인 경우
             queryString = "select M " +
                     "from Member M " +
-                    "join WeeklyWkoutStatRslt WR " +
-                    "  on WR.yyyyMmWMbr.mbrId = M.mbrId " +
-                    "where WR.yyyyMmWMbr.yyyyMmW.cuofYyyy = :cuofYyyy " +
-                    "  and WR.yyyyMmWMbr.yyyyMmW.cuofMm = :cuofMm " +
-                    "  and WR.yyyyMmWMbr.yyyyMmW.cuofWeek = :cuofWeek " +
+                    "join MonthlyWkoutStatRslt WR " +
+                    "  on WR.yyyyMmMbr.mbrId = M.mbrId " +
+                    "where WR.yyyyMmMbr.yyyyMm.cuofYyyy = :cuofYyyy " +
+                    "  and WR.yyyyMmMbr.yyyyMm.cuofMm = :cuofMm " +
                     "  and WR.smsSendRsltClsfCd = '02' " +
                     "  and M.statSmsSendYn = 'Y' " +
                     "group by M.mbrId " +
@@ -323,29 +320,27 @@ public class WeeklyStatSmsSendJob {
     }
     
     /* 문자 제목 생성 */
-    private String makeStatRsltTitle(String yyyyMmW) {
-        YyyyMmW curYyyyMmW = makeYyyyMmW(yyyyMmW);
+    private String makeStatRsltTitle(String yyyyMm) {
+        YyyyMm curYyyyMm = makeYyyyMm(yyyyMm);
 
         return new StringBuilder()
                 .append("[Work We Out] ")
-                .append(curYyyyMmW.getCuofYyyy())
+                .append(curYyyyMm.getCuofYyyy())
                 .append("년 ")
-                .append(curYyyyMmW.getCuofMm())
-                .append("월 ")
-                .append(curYyyyMmW.getCuofWeek())
-                .append("주차 운동통계")
+                .append(curYyyyMm.getCuofMm())
+                .append("월 운동통계")
                 .toString();
     }
 
     /* 문자 내용 생성 */
-    private String makeStatRsltContent(Long mbrId, String yyyyMmW) {
+    private String makeStatRsltContent(Long mbrId, String yyyyMm) {
 
         StringBuilder content = new StringBuilder();
 
-        YyyyMmW cuofYyyyMmW = makeYyyyMmW(yyyyMmW);
+        YyyyMm cuofYyyyMm = makeYyyyMm(yyyyMm);
 
         /* 1. 운동부위별 총 세트수 */
-        List<Object[]> totalSets = statRepository.findWeeklyMethodTotalSets(mbrId, cuofYyyyMmW);
+        List<Object[]> totalSets = statRepository.findMonthlyMethodTotalSets(mbrId, cuofYyyyMm);
         content.append("[1. 운동부위별 총 세트수]\n");
         for (Object[] totalSet : totalSets) {
             content.append(" ▶ ").append(String.valueOf(totalSet[0]));
@@ -354,17 +349,16 @@ public class WeeklyStatSmsSendJob {
         content.append("\n");
 
         /* 2. 운동종목별 중량증감 */
-        //  2-1. 이전 Week 정보 조회
-        List<Object[]> bfYyyyMmWEntity = dateRepository.findBeforeCuofYyyyMmW(cuofYyyyMmW, 1L);
-        YyyyMmW bfYyyyMmW = YyyyMmW.builder()
-                .cuofYyyy(String.valueOf(bfYyyyMmWEntity.get(0)[0]))
-                .cuofMm(String.valueOf(bfYyyyMmWEntity.get(0)[1]))
-                .cuofWeek(String.valueOf(bfYyyyMmWEntity.get(0)[2]))
+        //  2-1. 이전 Month 정보 조회
+        List<Object[]> bfYyyyMmEntity = dateRepository.findBeforeCuofYyyyMm(cuofYyyyMm, 1L);
+        YyyyMm bfYyyyMm = YyyyMm.builder()
+                .cuofYyyy(String.valueOf(bfYyyyMmEntity.get(0)[0]))
+                .cuofMm(String.valueOf(bfYyyyMmEntity.get(0)[1]))
                 .build();
         //  2-2. 중량증감 생성
-        List<Object[]> weeklyMethodWeiIncs = statRepository.findWeeklyMethodWeiIncs(mbrId, bfYyyyMmW, cuofYyyyMmW);
-        content.append("[2. 전 주 대비 운동종목별 중량 상승 추이]\n");
-        for (Object[] weiInc : weeklyMethodWeiIncs) {
+        List<Object[]> MonthlyMethodWeiIncs = statRepository.findMonthlyMethodWeiIncs(mbrId, bfYyyyMm, cuofYyyyMm);
+        content.append("[2. 전 월 대비 운동종목별 중량 상승 추이]\n");
+        for (Object[] weiInc : MonthlyMethodWeiIncs) {
 
             String methodNm = String.valueOf(weiInc[1]);
             Long bfWei = ((BigDecimal)weiInc[2]).longValue();
@@ -373,9 +367,9 @@ public class WeeklyStatSmsSendJob {
             String incDec = incWei >= 0 ? "증가" : "감소";
 
             content.append(" ▶ ").append(methodNm).append("\n");
-            content.append("  - 이전 주 최대무게 : ").append(bfWei).append("kg\n");
-            content.append("  - 이번 주 최대무게 : ").append(curWei).append("kg\n");
-            content.append("   → 1주일간 ").append(incWei).append("kg ").append(incDec).append("하였습니다.\n");
+            content.append("  - 이전 월 최대무게 : ").append(bfWei).append("kg\n");
+            content.append("  - 이번 월 최대무게 : ").append(curWei).append("kg\n");
+            content.append("   → 1개월간 ").append(incWei).append("kg ").append(incDec).append("하였습니다.\n");
         }
         content.append("\n");
 

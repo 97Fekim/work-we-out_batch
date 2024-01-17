@@ -17,17 +17,32 @@ public class JobTest {
     @Qualifier("WeeklyStatSmsSendJob")
     private Job job;
 
+    @Autowired
+    @Qualifier("MonthlyStatSmsSendJob")
+    private Job job2;
+
     @Test
-    public void WeeklyStatSmsDendJobTest() throws Exception{
+    public void WeeklyStatSmsSendJobTest() throws Exception{
 
         JobParameters jobParameters = new JobParametersBuilder()
                 .addString("yyyyMmW", "2024012")
                 .addString("reSendYn", "Y")
-                .addString("dummy", "16")
+                .addString("dummy", "17")
                 .toJobParameters();
 
         jobLauncher.run(job, jobParameters);
 
+    }
+
+    @Test
+    public void MonthlyStatSmsSendJobTest() throws Exception {
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addString("yyyyMm", "202401")
+                .addString("reSendYn", "Y")
+                .addString("dummy", "1")
+                .toJobParameters();
+
+        jobLauncher.run(job2, jobParameters);
     }
 
 
