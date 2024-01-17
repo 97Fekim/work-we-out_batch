@@ -47,10 +47,13 @@ dependencies {
     runtimeOnly 'com.h2database:h2'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
 
-    
     // 테스트코드 로깅
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
+
+    // 문자발송 - coolsms
+    implementation 'net.nurigo:sdk:4.3.0'
+
 }
 
 tasks.named('test') {
