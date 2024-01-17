@@ -44,7 +44,7 @@ import java.util.Map;
  *  - In/Out 타입 : DB to DB
  *  - In/Out 상세 : 회원기본 to 주간운동통계내역
  *  - 타입 : Chunk-Oriented
- *  - 청크 크기 : 1
+ *  - 청크 크기 : 1000
  *  - 스케줄 : 매주 월요일 08:40
  *  - 처리대상 : 회원의 전 Week 월요일~일요일 운동일지
  * */
@@ -63,17 +63,20 @@ public class WeeklyStatSmsSendJob {
 
     int chunkSize = 1000;
 
-    @Qualifier("WeeklyStatSmsSendJob")
     @Bean
-    public Job job_WeeklyStatSmsSendJob(JobRepository jobRepository, Step step01) {
+    @Qualifier("WeeklyStatSmsSendJob")
+    public Job job_WeeklyStatSmsSendJob(JobRepository jobRepository,
+                                        @Qualifier("step01_WeeklyStatSmsSendJob") Step step01,
+                                        @Qualifier("weeklyExecutionListener") JobExecutionListener jobExecutionListener) {
         return new JobBuilder("WeeklyStatSmsSendJob", jobRepository)
                 .start(step01)
-                .listener(jobExecutionListener())
+                .listener(jobExecutionListener)
                 .build();
     }
 
-    @JobScope
     @Bean
+    @JobScope
+    @Qualifier("step01_WeeklyStatSmsSendJob")
     public Step step01_WeeklyStatSmsSendJob(JobRepository jobRepository,
                                             PlatformTransactionManager transactionManager,
                                             @Value("#{jobParameters[yyyyMmW]}") String yyyyMmW,
@@ -208,7 +211,8 @@ public class WeeklyStatSmsSendJob {
     /* 전/후 처리 */
     @JobScope
     @Bean
-    public JobExecutionListener jobExecutionListener() {
+    @Qualifier("weeklyExecutionListener")
+    public JobExecutionListener weeklyExecutionListener() {
 
         return new JobExecutionListener() {
 
@@ -323,7 +327,7 @@ public class WeeklyStatSmsSendJob {
     }
     
     /* 문자 제목 생성 */
-    String makeStatRsltTitle(String yyyyMmW) {
+    private String makeStatRsltTitle(String yyyyMmW) {
         YyyyMmW curYyyyMmW = makeYyyyMmW(yyyyMmW);
 
         return new StringBuilder()
@@ -338,7 +342,7 @@ public class WeeklyStatSmsSendJob {
     }
 
     /* 문자 내용 생성 */
-    String makeStatRsltContent(Long mbrId, String yyyyMmW) {
+    private String makeStatRsltContent(Long mbrId, String yyyyMmW) {
 
         StringBuilder content = new StringBuilder();
 
