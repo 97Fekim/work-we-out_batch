@@ -12,7 +12,9 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "WkoutJnal")
-@Table(name="WKOUT_JNAL")
+@Table(name="WKOUT_JNAL",
+        indexes = @Index(name = "IDX_WKOUT_JNAL_ONE_DAY", columnList = "MBR_ID, YYYY, MM, DD")
+)
 @SequenceGenerator(
         name = "SEQ_WKOUT_JNAL_GENERATOR"
         , sequenceName = "SEQ_WKOUT_JNAL"

@@ -2,6 +2,13 @@ package com.fekim.workweout.batch.repository.member.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -46,5 +53,12 @@ public class Member {
 
     @Column(name="MBR_STAT_CLSF_CD", nullable = false, columnDefinition = "VARCHAR2(40)")
     private String mbrStatClsfCd;
+    
+    /* 로그인 성공시, 인증정보를 반환 */
+    public Authentication makeAuthentication() {
+        List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
+        authorityList.add(new SimpleGrantedAuthority("ADMIN"));
+        return new UsernamePasswordAuthenticationToken(this.getEmail(), null, authorityList);
+    }
 
 }

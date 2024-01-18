@@ -12,7 +12,11 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "Date")
-@Table(name="TBL_DATE")
+@Table(name="TBL_DATE",
+        indexes = { @Index(name = "IDX_TBL_DATE_FOR_SEARCH_WEEK", columnList = "CUOF_YYYY, CUOF_MM, CUOF_WEEK"),
+                @Index(name = "IDX_TBL_DATE_FOR_SEARCH_MM", columnList = "CUOF_YYYY, CUOF_MM")
+        }
+)
 public class Date {
 
     @EmbeddedId

@@ -11,7 +11,12 @@ import org.hibernate.annotations.OnDeleteAction;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "WkoutJnalMethod")
-@Table(name="WKOUT_JNAL_METHOD")
+@Table(name="WKOUT_JNAL_METHOD",
+        indexes = {
+                @Index(name = "IDX_WKOUT_JNAL_METHOD_JNAL_ID", columnList = "JNAL_ID"),
+                @Index(name = "IDX_ON_METHOD_ID", columnList = "METHOD_ID")
+        }
+)
 @SequenceGenerator(
         name = "SEQ_WKOUT_JNAL_METHOD_GENERATOR"
         , sequenceName = "SEQ_WKOUT_JNAL_METHOD"

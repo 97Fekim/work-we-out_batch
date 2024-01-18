@@ -10,7 +10,12 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(name = "MemberGrp")
-@Table(name="MEMBER_GRP")
+@Table(name="MEMBER_GRP",
+        indexes = {
+                @Index(name = "IDX_MEMBER_GRP_MBR_ID", columnList = "MBR_ID"),
+                @Index(name = "IDX_MEMBER_GRP_GRP_ID", columnList = "GRP_ID")
+        }
+)
 @SequenceGenerator(
         name = "SEQ_MEMBER_GRP_GENERATOR"
         , sequenceName = "SEQ_MEMBER_GRP"
