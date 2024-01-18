@@ -32,16 +32,19 @@ public class Member {
     @Column(name="EMAIL", nullable = false, columnDefinition = "VARCHAR2(320)", unique = true)
     private String email;
 
+    @Column(name="PASSWORD", nullable = false, columnDefinition = "VARCHAR2(120)")
+    private String password;
+
     @Column(name="STAT_SMS_SEND_YN", nullable = false, columnDefinition = "VARCHAR2(1)")
     private String statSmsSendYn;
 
-    @Column(name="MBR_ROLE_CLSF_CD", nullable = false, columnDefinition = "VARCHAR2(2)")
+    @Column(name="MBR_ROLE_CLSF_CD", nullable = false, columnDefinition = "VARCHAR2(40)")
     private String mbrRoleClsfCd;
 
     @Column(name="PROF_IMG_PATH", nullable = true, columnDefinition = "VARCHAR2(300)")
     private String profImgPath;
 
-    @Column(name="MBR_STAT_CLSF_CD", nullable = false, columnDefinition = "VARCHAR2(2)")
+    @Column(name="MBR_STAT_CLSF_CD", nullable = false, columnDefinition = "VARCHAR2(40)")
     private String mbrStatClsfCd;
 
 }
