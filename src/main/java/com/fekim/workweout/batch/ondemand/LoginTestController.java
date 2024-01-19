@@ -14,7 +14,7 @@ public class LoginTestController {
     public ResponseEntity<String> connect(HttpSession session) {
         String result;
 
-        Object email = session.getAttribute("LOGIN_USER");
+        Object email = session.getAttribute("LOGIN_MEMBER");
         if (email == null) {
             result = "로그인 되지 않음";
         } else {
