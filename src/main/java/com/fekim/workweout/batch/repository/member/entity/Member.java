@@ -6,7 +6,9 @@ import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -19,10 +21,10 @@ import java.util.StringTokenizer;
 @Entity(name = "Member")
 @Table(name="MEMBER")
 @SequenceGenerator(
-    name = "SEQ_MEMBER_GENERATOR"
-    , sequenceName = "SEQ_MEMBER"
-    , initialValue = 1
-    , allocationSize = 1
+        name = "SEQ_MEMBER_GENERATOR"
+        , sequenceName = "SEQ_MEMBER"
+        , initialValue = 1
+        , allocationSize = 1
 )
 public class Member {
 
@@ -54,7 +56,7 @@ public class Member {
 
     @Column(name="MBR_STAT_CLSF_CD", nullable = false, columnDefinition = "VARCHAR2(40)")
     private String mbrStatClsfCd;
-    
+
     /* 로그인 성공시, 인증정보를 반환 */
     public Authentication makeAuthentication() {
         List<SimpleGrantedAuthority> authorityList = new ArrayList<>();
@@ -65,6 +67,10 @@ public class Member {
         }
 
         return new UsernamePasswordAuthenticationToken(this.getEmail(), null, authorityList);
+    }
+
+    public boolean isPasswordMatch(PasswordEncoder passwordEncoder, String password) {
+        return passwordEncoder.matches(password, this.password);
     }
 
 }

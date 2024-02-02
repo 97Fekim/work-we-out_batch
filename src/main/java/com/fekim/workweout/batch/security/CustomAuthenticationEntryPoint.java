@@ -15,12 +15,10 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        System.out.println(request.getRequestURI());
-        System.out.println(request.getRequestURL());
-        response.setContentType("text/plain;charset=UTF-8");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getWriter().flush();
-        response.getWriter().close();
-        System.out.println("=========================Entry Point=========================");
+
+        System.out.println("[DEBUG]===================CustomAuthenticationEntryPoint Start==============");
+
+        // 인증 실패시 로그인화면으로 리다이렉트한다.
+        response.sendRedirect("/signIn");
     }
 }

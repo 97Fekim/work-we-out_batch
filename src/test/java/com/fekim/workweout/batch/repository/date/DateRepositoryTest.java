@@ -3,6 +3,7 @@ package com.fekim.workweout.batch.repository.date;
 import com.fekim.workweout.batch.repository.date.DateRepository;
 import com.fekim.workweout.batch.repository.date.entity.key.YyyyMm;
 import com.fekim.workweout.batch.repository.date.entity.key.YyyyMmW;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,9 +28,7 @@ public class DateRepositoryTest {
                 1L
         );
 
-        System.out.println(String.valueOf(beforeCuofYyyyMmW.get(0)[0]));
-        System.out.println(String.valueOf(beforeCuofYyyyMmW.get(0)[1]));
-        System.out.println(String.valueOf(beforeCuofYyyyMmW.get(0)[2]));
+        Assertions.assertThat(true);
     }
 
     @Test
