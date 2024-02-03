@@ -29,7 +29,6 @@ public class WkoutJnalMethodRepositoryTest {
 
     @Transactional
     @Test
-    @Commit
     void deleteByJnalIdTest() {
         wkoutJnalMethodRepository.deleteByJnalId(4L);
     }
