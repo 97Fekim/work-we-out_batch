@@ -24,13 +24,13 @@ public class CustomUserAuthenticationFilter extends OncePerRequestFilter {
 
         System.out.println("[DEBUG]===================CustomUserAuthenticationFilter Start==============");
 
-        Long mbrId = (Long) request.getSession().getAttribute("LOGIN_MEMBER");
-
-        if (mbrId != null) {
-            Member member = memberRepository.findById(mbrId).get();
-
-            SecurityContextHolder.getContext().setAuthentication(member.makeAuthentication());
-        }
+//        Long mbrId = (Long) request.getSession().getAttribute("LOGIN_MEMBER");
+//
+//        if (mbrId != null) {
+//            Member member = memberRepository.findById(mbrId).get();
+//
+//            SecurityContextHolder.getContext().setAuthentication(member.makeAuthentication());
+//        }
 
         filterChain.doFilter(request, response);
 
