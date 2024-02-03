@@ -51,8 +51,7 @@ public class WebSecurityConfig {
                 )
                 .authorizeHttpRequests((authorizeRequests) ->
                         authorizeRequests
-                                .requestMatchers("/jnal", "/jnal/**").hasAnyRole("USER")
-                                .requestMatchers("/", "/**").permitAll()
+                                .requestMatchers("/stat/manage/", "/stat/manage/**").hasRole("ADMIN")
                 )
                 .cors(httpSecurityCorsConfigurer ->
                         httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource)
