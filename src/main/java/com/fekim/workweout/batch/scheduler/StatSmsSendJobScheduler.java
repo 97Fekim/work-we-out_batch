@@ -68,7 +68,7 @@ public class StatSmsSendJobScheduler {
     }
 
     //@Scheduled(fixedDelay = 10000L) // for test
-    @Scheduled(cron = "0 30 8 * * 1") // 매주 1일 아침 08:30 실행
+    @Scheduled(cron = "0 30 8 * * 1") // 매일 1일 아침 08:30 실행
     public void runMonthlyStatSmsSendJob() throws Exception {
         LocalDate now = LocalDate.now();
         LocalDate firstMondayOfMonth = now.with(TemporalAdjusters.firstInMonth(DayOfWeek.MONDAY));
