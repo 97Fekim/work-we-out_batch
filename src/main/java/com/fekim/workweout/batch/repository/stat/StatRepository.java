@@ -84,7 +84,7 @@ public interface StatRepository extends Repository<WkoutJnalMethod, Long> {
             "      AND D.CUOF_WEEK = :#{#curYyyyMmW.cuofWeek} " +
             "GROUP BY WM.METHOD_ID) CUR_WEEK " +
             "WHERE BEFORE_WEEK.METHOD_ID = CUR_WEEK.METHOD_ID " +
-            "ORDER BY methodId;"
+            "ORDER BY methodId "
             , nativeQuery = true)
     List<Object[]> findWeeklyMethodWeiIncs(@Param("mbrId") Long mbrId,
                                            @Param("bfYyyyMmW") YyyyMmW bfYyyyMmW,
@@ -131,7 +131,7 @@ public interface StatRepository extends Repository<WkoutJnalMethod, Long> {
             "      AND D.CUOF_MM = :#{#curYyyyMm.cuofMm} " +
             "GROUP BY WM.METHOD_ID) CUR_MONTH " +
             "WHERE BEFORE_MONTH.METHOD_ID = CUR_MONTH.METHOD_ID " +
-            "ORDER BY methodId;"
+            "ORDER BY methodId "
             , nativeQuery = true)
     List<Object[]> findMonthlyMethodWeiIncs(@Param("mbrId") Long mbrId,
                                            @Param("bfYyyyMm") YyyyMm bfYyyyMm,
@@ -174,7 +174,7 @@ public interface StatRepository extends Repository<WkoutJnalMethod, Long> {
             "  AND TD.CUOF_MM = :#{#yyyyMmW.cuofMm} " +
             "  AND TD.CUOF_WEEK = :#{#yyyyMmW.cuofWeek} " +
             "  AND WJM.METHOD_ID = WM.METHOD_ID " +
-            "  AND WJM.METHOD_ID = :#{#methodId} ; " +
+            "  AND WJM.METHOD_ID = :#{#methodId} " +
             "", nativeQuery = true)
     Long findMethodMaxWeiInWeek(@Param("mbrId") Long mbrId,
                                       @Param("methodId") Long methodId,
@@ -214,7 +214,7 @@ public interface StatRepository extends Repository<WkoutJnalMethod, Long> {
             "  AND TD.CUOF_YYYY = :#{#yyyyMm.cuofYyyy} " +
             "  AND TD.CUOF_MM = :#{#yyyyMm.cuofMm} " +
             "  AND WJM.METHOD_ID = WM.METHOD_ID " +
-            "  AND WJM.METHOD_ID = :#{#methodId} ; " +
+            "  AND WJM.METHOD_ID = :#{#methodId} " +
             "", nativeQuery = true)
     Long findMethodMaxWeiInMonth(@Param("mbrId") Long mbrId,
                                 @Param("methodId") Long methodId,

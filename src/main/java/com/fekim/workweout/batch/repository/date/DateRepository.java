@@ -32,7 +32,7 @@ public interface DateRepository extends JpaRepository<Date, YyyyMmDd> {
             "  AND CUOF_YYYY = :#{#cuofYyyyMmW.cuofYyyy} " +
             "  AND CUOF_MM = :#{#cuofYyyyMmW.cuofMm} " +
             "  AND CUOF_WEEK = :#{#cuofYyyyMmW.cuofWeek} " +
-            "ORDER BY BF_CUOF_YYYY, BF_CUOF_MM, BF_CUOF_WEEK; "
+            "ORDER BY BF_CUOF_YYYY, BF_CUOF_MM, BF_CUOF_WEEK "
             , nativeQuery = true)
     List<Object[]> findBeforeCuofYyyyMmW(@Param("cuofYyyyMmW") YyyyMmW cuofYyyyMmW,
                                    @Param("range") Long range);
@@ -53,7 +53,7 @@ public interface DateRepository extends JpaRepository<Date, YyyyMmDd> {
             "WHERE 1=1  " +
             "  AND CUOF_YYYY = :#{#cuofYyyyMm.cuofYyyy} " +
             "  AND CUOF_MM = :#{#cuofYyyyMm.cuofMm} " +
-            "ORDER BY BF_CUOF_YYYY, BF_CUOF_MM; "
+            "ORDER BY BF_CUOF_YYYY, BF_CUOF_MM "
             , nativeQuery = true)
     List<Object[]> findBeforeCuofYyyyMm(@Param("cuofYyyyMm") YyyyMm cuofYyyyMm,
                                          @Param("range") Long range);
