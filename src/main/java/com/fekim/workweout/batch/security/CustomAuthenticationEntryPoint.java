@@ -18,7 +18,5 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
         System.out.println("[DEBUG]===================CustomAuthenticationEntryPoint Start==============");
 
-        // 인증 실패시 로그인화면으로 리다이렉트한다.
-        response.sendRedirect("/signIn");
     }
 }
